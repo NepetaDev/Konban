@@ -1,7 +1,7 @@
 Package: me.nepeta.konban
 Name: Konban
-Depends: mobilesubstrate, ws.hbang.common (>= 1.11)
-Version: 0.1.0
+Depends: mobilesubstrate, ws.hbang.common (>= 1.11), applist
+Version: 0.1.1
 Architecture: iphoneos-arm
 Description: Replaces the "Today" view with an app of your choice.
 Maintainer: Nepeta
