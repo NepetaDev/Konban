@@ -27,6 +27,7 @@ UIViewController *ourVC = nil;
 -(void)viewWillAppear:(bool)arg1 {
     %orig;
 
+    if (self.konHostView) [Konban rehost:bundleID];
     [self.konSpinnerView stopAnimating];
     [self.konSpinnerView removeFromSuperview];
     [self.konHostView removeFromSuperview];
