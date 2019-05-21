@@ -4,9 +4,10 @@
 HBPreferences *preferences;
 BOOL dpkgInvalid = false;
 BOOL visible = false;
-bool enabled;
-bool enabledCoverSheet;
-bool enabledHomeScreen;
+BOOL enabled;
+BOOL enabledCoverSheet;
+BOOL enabledHomeScreen;
+BOOL hideStatusBar;
 CGFloat scale = 0.8;
 CGFloat cornerRadius = 16;
 NSString *bundleID = @"com.apple.calculator";
@@ -21,6 +22,7 @@ UIViewController *ourVC = nil;
 
 -(void)viewDidLayoutSubviews {
     %orig;
+    if (!enabled) return;
     if (self.konHostView) [Konban rehost:bundleID];
 }
 
@@ -51,6 +53,7 @@ UIViewController *ourVC = nil;
         [self.view bringSubviewToFront:self.konHostView];
         self.konHostView.hidden = NO;
         visible = YES;
+        CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), (CFStringRef)@"me.nepeta.konban/StatusBarHide", nil, nil, true);
 
         if (!self.konHostView) {
             [self.konSpinnerView startAnimating];
@@ -74,6 +77,7 @@ UIViewController *ourVC = nil;
 -(void)viewDidDisappear:(bool)arg1 {
     %orig;
     visible = NO;
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), (CFStringRef)@"me.nepeta.konban/StatusBarShow", nil, nil, true);
 
     if (!self.konHostView) return;
     [Konban dehost:bundleID];
@@ -124,6 +128,7 @@ void changeApp() {
     [preferences registerBool:&enabled default:YES forKey:@"Enabled"];
     [preferences registerFloat:&cornerRadius default:16 forKey:@"CornerRadius"];
     [preferences registerFloat:&scale default:0.8 forKey:@"Scale"];
+    [preferences registerBool:&hideStatusBar default:YES forKey:@"HideStatusBar"];
     dpkgInvalid = ![[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/me.nepeta.konban.list"];
 
     if (dpkgInvalid) {

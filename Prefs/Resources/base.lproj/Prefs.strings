@@ -2,6 +2,7 @@
   "ENABLED" = "Enabled";
   "ENABLED_COVER_SHEET" = "Cover sheet/lock screen";
   "ENABLED_HOME_SCREEN" = "Home screen";
+  "HIDE_STATUS_BAR" = "Hide status bar";
   "APPLICATION" = "Application";
   "CORNER_RADIUS" = "Corner radius";
   "SCALE" = "Scale";
