@@ -30,8 +30,8 @@
     [Konban launch:bundleID];
     [Konban forceBackgrounded:NO forApp:app];
     FBSceneHostManager *manager = [[app mainScene] hostManager];
-    [manager enableHostingForRequester:bundleID orderFront:YES];
-    return [manager hostViewForRequester:bundleID enableAndOrderFront:YES];
+    [manager enableHostingForRequester:@"Konban" orderFront:YES];
+    return [manager hostViewForRequester:@"Konban" enableAndOrderFront:YES];
 }
 
 +(void)launch:(NSString *)bundleID {
@@ -40,7 +40,7 @@
 
 +(void)forceBackgrounded:(BOOL)backgrounded forApp:(SBApplication *)app {
     FBSMutableSceneSettings *sceneSettings = [[[app mainScene] mutableSettings] mutableCopy];
-    [sceneSettings setBackgrounded:NO];
+    [sceneSettings setBackgrounded:backgrounded];
     [[app mainScene] updateSettings:sceneSettings withTransitionContext:nil completion:nil];
 }
 
@@ -50,14 +50,14 @@
     [Konban launch:bundleID];
     [Konban forceBackgrounded:NO forApp:app];
     FBSceneHostManager *manager = [[app mainScene] hostManager];
-    [manager enableHostingForRequester:bundleID priority:1];
+    [manager enableHostingForRequester:@"Konban" orderFront:YES];
 }
 
 +(void)dehost:(NSString *)bundleID {
     SBApplication *app = [Konban app:bundleID];
     [Konban forceBackgrounded:YES forApp:app];
     FBSceneHostManager *manager = [[app mainScene] hostManager];
-    [manager disableHostingForRequester:bundleID];
+    [manager disableHostingForRequester:@"Konban"];
 }
 
 @end

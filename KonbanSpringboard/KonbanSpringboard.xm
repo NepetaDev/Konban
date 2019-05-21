@@ -1,9 +1,7 @@
 #import "KonbanSpringboard.h"
 #import "Konban.m"
 
-#ifndef SIMULATOR
 HBPreferences *preferences;
-#endif
 BOOL dpkgInvalid = false;
 BOOL visible = false;
 bool enabled;
@@ -23,13 +21,12 @@ UIViewController *ourVC = nil;
 
 -(void)viewDidLayoutSubviews {
     %orig;
-    [Konban rehost:bundleID];
+    if (self.konHostView) [Konban rehost:bundleID];
 }
 
 -(void)viewWillAppear:(bool)arg1 {
     %orig;
 
-    [Konban dehost:bundleID];
     [self.konSpinnerView stopAnimating];
     [self.konSpinnerView removeFromSuperview];
     [self.konHostView removeFromSuperview];
@@ -65,15 +62,22 @@ UIViewController *ourVC = nil;
             view.hidden = NO;
         }
 
-        [self.konHostView removeFromSuperview];
+        if (self.konHostView) {
+            [self.konHostView removeFromSuperview];
+            [Konban dehost:bundleID];
+            self.konHostView = nil;
+        }
     }
 }
 
 -(void)viewDidDisappear:(bool)arg1 {
     %orig;
     visible = NO;
-    [self.konHostView removeFromSuperview];
+
+    if (!self.konHostView) return;
     [Konban dehost:bundleID];
+    [self.konHostView removeFromSuperview];
+    self.konHostView = nil;
 }
 
 %end
@@ -115,16 +119,11 @@ void changeApp() {
 }
 
 %ctor{
-    #ifndef SIMULATOR
     preferences = [[HBPreferences alloc] initWithIdentifier:@"me.nepeta.konban"];
     [preferences registerBool:&enabled default:YES forKey:@"Enabled"];
     [preferences registerFloat:&cornerRadius default:16 forKey:@"CornerRadius"];
     [preferences registerFloat:&scale default:0.8 forKey:@"Scale"];
     dpkgInvalid = ![[NSFileManager defaultManager] fileExistsAtPath:@"/var/lib/dpkg/info/me.nepeta.konban.list"];
-    #else
-    enabled = YES;
-    dpkgInvalid = NO;
-    #endif
 
     if (dpkgInvalid) {
         %init(KonbanIntegrityFail);
