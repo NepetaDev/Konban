@@ -1,9 +1,9 @@
 #import "KonbanSpringboard.h"
-#import "Konban.m"
+#import "Konban.h"
 
 HBPreferences *preferences;
 BOOL dpkgInvalid = false;
-BOOL visible = false;
+BOOL visible = NO;
 BOOL enabled;
 BOOL enabledCoverSheet;
 BOOL enabledHomeScreen;
@@ -20,6 +20,29 @@ CGRect insetByPercent(CGRect f, CGFloat s) {
 
 %group Konban
 
+%hook SBSceneManager
+
+-(void)_addReportedForegroundExternalApplicationSceneHandle:(id)handle {
+    if (!enabled || !visible || ![[[handle scene] identifier] isEqualToString:bundleID]) %orig;
+}
+
+-(id)externalForegroundApplicationSceneHandles {
+    if (!enabled || !visible) return %orig;
+
+    NSArray *orig = %orig;
+    if (!orig || ![orig isKindOfClass:%c(NSArray)]) return orig;
+
+    NSMutableArray *final = [NSMutableArray new];
+    
+    for (id handle in orig) {
+        if (![[[handle scene] identifier] isEqualToString:bundleID]) [final addObject:handle];
+    }
+
+    return final;
+}
+
+%end
+
 %hook SBHomeScreenTodayViewController
 
 %property (nonatomic, retain) UIView *konHostView;
@@ -28,7 +51,7 @@ CGRect insetByPercent(CGRect f, CGFloat s) {
 -(void)viewWillLayoutSubviews {
     %orig;
 
-    if (enabled && self.konHostView) {
+    if (enabled && visible && self.konHostView) {
         [self performSelector:@selector(viewWillAppear:) withObject:nil afterDelay:0.05];
     }
 }
@@ -36,7 +59,7 @@ CGRect insetByPercent(CGRect f, CGFloat s) {
 -(void)viewDidLayoutSubviews {
     %orig;
 
-    if (enabled && self.konHostView) {
+    if (enabled && visible && self.konHostView) {
         [self performSelector:@selector(viewWillAppear:) withObject:nil afterDelay:0.05];
     }
 }
@@ -44,10 +67,11 @@ CGRect insetByPercent(CGRect f, CGFloat s) {
 -(void)viewWillAppear:(bool)arg1 {
     %orig;
 
-    if (self.konHostView) {
+    if (enabled && self.konHostView) {
         self.konSpinnerView.frame = self.view.frame;
         self.konHostView.frame = insetByPercent(self.view.frame, scale);
-        self.konHostView.transform = CGAffineTransformMakeScale(scale, scale); 
+        self.konHostView.transform = CGAffineTransformMakeScale(scale, scale);
+        visible = YES;
         [Konban rehost:bundleID];
         return;
     }
@@ -66,6 +90,7 @@ CGRect insetByPercent(CGRect f, CGFloat s) {
         [self.view addSubview:self.konSpinnerView];
         [self.konSpinnerView startAnimating];
 
+        visible = YES;
         self.konHostView = [Konban viewFor:bundleID];
         self.konHostView.frame = self.view.frame;
         self.konHostView.transform = CGAffineTransformMakeScale(scale, scale); 
@@ -74,7 +99,6 @@ CGRect insetByPercent(CGRect f, CGFloat s) {
         [self.view addSubview:self.konHostView];
         [self.view bringSubviewToFront:self.konHostView];
         self.konHostView.hidden = NO;
-        visible = YES;
         CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), (CFStringRef)@"me.nepeta.konban/StatusBarHide", nil, nil, true);
 
         if (!self.konHostView) {
@@ -98,12 +122,12 @@ CGRect insetByPercent(CGRect f, CGFloat s) {
 
 -(void)viewDidDisappear:(bool)arg1 {
     %orig;
-    visible = NO;
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), (CFStringRef)@"me.nepeta.konban/StatusBarShow", nil, nil, true);
 
+    visible = NO;
     if (!self.konHostView) return;
-    [Konban dehost:bundleID];
     [self.konHostView removeFromSuperview];
+    [Konban dehost:bundleID];
     self.konHostView = nil;
 }
 
