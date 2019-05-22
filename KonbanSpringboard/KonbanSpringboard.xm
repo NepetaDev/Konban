@@ -22,14 +22,21 @@ UIViewController *ourVC = nil;
 
 -(void)viewDidLayoutSubviews {
     %orig;
+
     if (!enabled) return;
-    if (self.konHostView) [Konban rehost:bundleID];
+    if (self.konHostView) {
+        [Konban rehost:bundleID];
+        self.konHostView.transform = CGAffineTransformMakeScale(scale, scale); 
+    }
 }
 
 -(void)viewWillAppear:(bool)arg1 {
     %orig;
 
-    if (self.konHostView) [Konban rehost:bundleID];
+    if (self.konHostView) {
+        [Konban rehost:bundleID];
+        return;
+    }
     [self.konSpinnerView stopAnimating];
     [self.konSpinnerView removeFromSuperview];
     [self.konHostView removeFromSuperview];
