@@ -13,6 +13,11 @@ CGFloat cornerRadius = 16;
 NSString *bundleID = @"com.apple.calculator";
 UIViewController *ourVC = nil;
 
+CGRect insetByPercent(CGRect f, CGFloat s) {
+    CGFloat originScale = (1.0 - s)/2.0;
+    return CGRectMake(f.origin.x + f.size.width * originScale, f.origin.y + f.size.height * originScale, f.size.width * s, f.size.height * s);
+}
+
 %group Konban
 
 %hook SBHomeScreenTodayViewController
@@ -20,13 +25,19 @@ UIViewController *ourVC = nil;
 %property (nonatomic, retain) UIView *konHostView;
 %property (nonatomic, retain) UIActivityIndicatorView *konSpinnerView;
 
+-(void)viewWillLayoutSubviews {
+    %orig;
+
+    if (enabled && self.konHostView) {
+        [self performSelector:@selector(viewWillAppear:) withObject:nil afterDelay:0.05];
+    }
+}
+
 -(void)viewDidLayoutSubviews {
     %orig;
 
-    if (!enabled) return;
-    if (self.konHostView) {
-        [Konban rehost:bundleID];
-        self.konHostView.transform = CGAffineTransformMakeScale(scale, scale); 
+    if (enabled && self.konHostView) {
+        [self performSelector:@selector(viewWillAppear:) withObject:nil afterDelay:0.05];
     }
 }
 
@@ -34,9 +45,13 @@ UIViewController *ourVC = nil;
     %orig;
 
     if (self.konHostView) {
+        self.konSpinnerView.frame = self.view.frame;
+        self.konHostView.frame = insetByPercent(self.view.frame, scale);
+        self.konHostView.transform = CGAffineTransformMakeScale(scale, scale); 
         [Konban rehost:bundleID];
         return;
     }
+
     [self.konSpinnerView stopAnimating];
     [self.konSpinnerView removeFromSuperview];
     [self.konHostView removeFromSuperview];
